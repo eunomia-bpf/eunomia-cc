@@ -1,6 +1,3 @@
 [submodule "libs/libbpf"]
 	path = libs/libbpf
 	url = https://github.com/libbpf/libbpf.git
-[submodule "libs/blazesym"]
-	path = libs/blazesym
-	url = https://github.com/libbpf/blazesym.git
