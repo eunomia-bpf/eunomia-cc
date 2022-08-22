@@ -48,6 +48,10 @@ clean:
 	$(call msg,CLEAN)
 	$(Q)rm -rf $(OUTPUT) $(APPS) client *.o
 
+$(OUTPUT)/event_ast.json: event.c event.h
+	$(call msg,DUMP_EVENT)
+	$(Q)clang -Xclang -ast-dump=json -fsyntax-only event.c > $(OUTPUT)/event_ast.json
+
 $(OUTPUT) $(OUTPUT)/libbpf:
 	$(call msg,MKDIR,$@)
 	$(Q)mkdir -p $@
@@ -85,7 +89,7 @@ $(APPS): %: $(OUTPUT)/%.o cJSON.o $(LIBBPF_OBJ) | $(OUTPUT)
 	$(call msg,BINARY,$@)
 	$(Q)$(CC) $(CFLAGS) $^ -lelf -lz -o $@
 
-$(OUTPUT)/package.json: $(APPS)
+$(OUTPUT)/package.json: $(APPS) $(OUTPUT)/event_ast.json
 	$(Q)./client $(PACKAGE_NAME) > $(OUTPUT)/package.json
 
 # delete failed targets
