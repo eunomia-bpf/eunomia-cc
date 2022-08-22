@@ -7,7 +7,7 @@
 #define MAX_FILENAME_LEN 127
 
 // TODO: fix hard coded values
-
+// use this as metadata
 struct event {
 	int pid;
 	int ppid;
