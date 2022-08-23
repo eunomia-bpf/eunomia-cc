@@ -31,14 +31,20 @@ see: [github.com/eunomia-bpf/eunomia-bpf](https://github.com/eunomia-bpf/eunomia
 simply run:
 
 ```console
-docker run -it -v/path/to/repo/:/src yunwei37/ebpm
+docker run -it -v /path/to/repo/:/src yunwei37/ebpm
 ```
 
 Or you can do that without a container, which is listed below:
 
 ## Github actions
 
-Use this as a github action, to compile on line.
+Use this as a github action, to compile online: see [eunomia-bpf/ebpm-template)](https://github.com/eunomia-bpf/ebpm-template).
+
+and you can run it with:
+
+```console
+$ sudo ./ecli run https://
+```
 
 # Building
 
@@ -53,7 +59,7 @@ You will need `clang`, `libelf` and `zlib` to build the examples, package names 
 
 On Ubuntu/Debian, you need:
 ```shell
-$ apt install clang libelf1 libelf-dev zlib1g-dev
+$ apt install clang libelf1 libelf-dev zlib1g-dev llvm
 ```
 
 On CentOS/Fedora, you need:
