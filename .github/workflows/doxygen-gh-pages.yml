@@ -37,7 +37,9 @@ jobs:
         run:  git submodule update --init --recursive
 
       - name: build eBPF data
-        run:  make install_deps
+        run:  |
+              make install_deps
+              make
 
       - name: Setup Pages
         uses: actions/configure-pages@v1
@@ -45,7 +47,7 @@ jobs:
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
-          path: '.'
+          path: '.output/'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@main
