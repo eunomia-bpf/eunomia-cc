@@ -6,7 +6,7 @@ The only file you will need to write is:
 
 ```console
 your_program.bpf.c
-your_program.h  # optional, if you want to use ringbuf to export events, can go with out it.
+your_program.bpf.h  # optional, if you want to use ringbuf to export events, can go with out it.
 ```
 
 after that, simply run this:

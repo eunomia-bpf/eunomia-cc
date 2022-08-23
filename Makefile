@@ -98,7 +98,8 @@ SOURCE_DIR ?= /src/
 build:
 	cp -f $(SOURCE_DIR)*.bpf.c     ./client.bpf.c
 	sed -i '1s/^/#include "event.h"\n/' ./client.bpf.c
-	cp -f $(SOURCE_DIR)*.h         ./event.h || :
+	cp -f $(SOURCE_DIR)*.bpf.h         ./ || :
+	cp -f $(SOURCE_DIR)*.bpf.h         ./event.h || :
 	cp -f $(SOURCE_DIR)config.json ./config.json || :
 	make all
 	cp -u .output/package.json $(SOURCE_DIR)/package.json
