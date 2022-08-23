@@ -48,9 +48,9 @@ clean:
 	$(call msg,CLEAN)
 	$(Q)rm -rf $(OUTPUT) $(APPS) client *.o
 
-$(OUTPUT)/event_ast.json: event.c event.h
+$(OUTPUT)/event_ast.json: libs/event.c event.h
 	$(call msg,DUMP_EVENT)
-	$(Q)clang -Xclang -ast-dump=json -fsyntax-only event.c > $(OUTPUT)/event_ast.json
+	$(Q)clang -Xclang -ast-dump=json -fsyntax-only libs/event.c > $(OUTPUT)/event_ast.json
 
 $(OUTPUT) $(OUTPUT)/libbpf:
 	$(call msg,MKDIR,$@)
@@ -91,6 +91,20 @@ $(APPS): %: $(OUTPUT)/%.o cJSON.o $(LIBBPF_OBJ) | $(OUTPUT)
 
 $(OUTPUT)/package.json: $(APPS) $(OUTPUT)/event_ast.json
 	$(Q)./client $(PACKAGE_NAME) > $(OUTPUT)/package.json
+
+SOURCE_DIR ?= /src/
+
+.PHONY: build
+build:
+	cp -f $(SOURCE_DIR)*.bpf.c     ./client.bpf.c || :
+	cp -f $(SOURCE_DIR)*.h         ./event.h || :
+	cp -f $(SOURCE_DIR)config.json ./config.json || :
+	make all
+	cp .output/package.json $(SOURCE_DIR)
+
+.PHONY: docker_image
+docker_image:
+	docker build -t yunwei37/ebpm .
 
 # delete failed targets
 .DELETE_ON_ERROR:

@@ -8,8 +8,8 @@
 #include <time.h>
 
 #include ".output/client.skel.h"
-#include "cJSON.h"
-#include "base64_encode.h"
+#include "libs/cJSON.h"
+#include "libs/base64_encode.h"
 
 const char *config_file_name = "config.json";
 
