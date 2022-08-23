@@ -31,13 +31,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install dependence
-        run: sudo apt-get update; sudo apt-get -y install clang libelf1 libelf-dev zlib1g-dev
+        run: make install_deps
 
       - name: get submodule
         run:  git submodule update --init --recursive
 
       - name: build eBPF data
-        run:  make
+        run:  make install_deps
 
       - name: Setup Pages
         uses: actions/configure-pages@v1

@@ -96,15 +96,22 @@ SOURCE_DIR ?= /src/
 
 .PHONY: build
 build:
-	cp -f $(SOURCE_DIR)*.bpf.c     ./client.bpf.c || :
+	cp -f $(SOURCE_DIR)*.bpf.c     ./client.bpf.c
+	sed -i '1s/^/#include "event.h"\n/' ./client.bpf.c
 	cp -f $(SOURCE_DIR)*.h         ./event.h || :
 	cp -f $(SOURCE_DIR)config.json ./config.json || :
 	make all
-	cp .output/package.json $(SOURCE_DIR)
+	cp -u .output/package.json $(SOURCE_DIR)/package.json
 
 .PHONY: docker_image
 docker_image:
-	docker build -t yunwei37/ebpm .
+	docker build -t yunwei37/ebpm:latest .
+	docker push yunwei37/ebpm:latest
+
+.PHONY: install_deps
+install_deps:
+	sudo apt-get update
+	sudo apt-get -y install clang libelf1 libelf-dev zlib1g-dev cmake clang llvm
 
 # delete failed targets
 .DELETE_ON_ERROR:

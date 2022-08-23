@@ -12,7 +12,7 @@ your_program.h  # optional, if you want to use ringbuf to export events, can go 
 after that, simply run this:
 
 ```console
-docker run -it -v /path/to/repo/:/src yunwei37/ebpm # use absolute path
+docker run -it -v /path/to/repo/:/src yunwei37/ebpm:latest # use absolute path
 ```
 
 you will get a `package.json` in your root dir. Just run:
@@ -21,10 +21,10 @@ you will get a `package.json` in your root dir. Just run:
 $ sudo ./ecli run package.json
 ```
 
-to start it!
+to start it! you can download `ecli` tool from [eunomia-bpf/releases](https://github.com/eunomia-bpf/eunomia-bpf/releases), we have pre-build binaries for linux. Small and No dependencies, besides glibc and glibcxx.
 
 The ebpf compiled code can run on different kernel versions(CO-RE).
-see: https://github.com/eunomia-bpf/eunomia-bpf for details.
+see: [github.com/eunomia-bpf/eunomia-bpf](https://github.com/eunomia-bpf/eunomia-bpf) for details.
 
 ## container image
 
@@ -64,12 +64,21 @@ $ dnf install clang elfutils-libelf elfutils-libelf-devel zlib-devel
 
 ## Build
 
-Makefile build:
+Makefile build the toolchain:
 
 ```console
 $ git submodule update --init --recursive       # check out libbpf
 $ make
 ```
+
+After the toolchain has been build, just run:
+
+```console
+$ cd ebpm-bootstrap
+$ SOURCE_DIR=[you repo path] make build
+```
+
+to compile it.
 
 ## build with you own ebpf code
 
