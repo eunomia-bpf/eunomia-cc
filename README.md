@@ -1,4 +1,4 @@
-# An eBPF compile template for ebpm
+# An eBPF online compile template for eunomia-bpf
 
 An CO-RE compile set to help you focus on writing a single eBPF program in the kernel. Nothing more TODO!
 
@@ -21,7 +21,12 @@ you will get a `package.json` in your root dir. Just run:
 $ sudo ./ecli run package.json
 ```
 
-to start it! you can download `ecli` tool from [eunomia-bpf/releases](https://github.com/eunomia-bpf/eunomia-bpf/releases), we have pre-build binaries for linux. Small and No dependencies, besides glibc and glibcxx.
+to start it! you can download `ecli` tool from [eunomia-bpf/releases](https://github.com/eunomia-bpf/eunomia-bpf/releases), we have pre-build binaries for linux x86. Small and No dependencies, besides glibc and glibcxx. Or just run this:
+
+```console
+wget https://aka.pw/bpf-ecli -O ecli
+chmod +x ecli
+```
 
 The ebpf compiled code can run on different kernel versions(CO-RE).
 see: [github.com/eunomia-bpf/eunomia-bpf](https://github.com/eunomia-bpf/eunomia-bpf) for details.
