@@ -1,6 +1,6 @@
 # An eBPF compile template for ebpm
 
-An compile set to help you focus on writing a single eBPF program in the kernel. Nothing more TODO!
+An CO-RE compile set to help you focus on writing a single eBPF program in the kernel. Nothing more TODO!
 
 The only file you will need to write is:
 
@@ -12,7 +12,7 @@ your_program.h  # optional, if you want to use ringbuf to export events, can go 
 after that, simply run this:
 
 ```console
-docker run -it -v/path/to/repo/:/src yunwei37/ebpm
+docker run -it -v /path/to/repo/:/src yunwei37/ebpm # use absolute path
 ```
 
 you will get a `package.json` in your root dir. Just run:
@@ -23,6 +23,7 @@ $ sudo ./ecli run package.json
 
 to start it!
 
+The ebpf compiled code can run on different kernel versions(CO-RE).
 see: https://github.com/eunomia-bpf/eunomia-bpf for details.
 
 ## container image
@@ -37,7 +38,7 @@ Or you can do that without a container, which is listed below:
 
 ## Github actions
 
-TODO: use this as a github action.
+Use this as a github action, to compile on line.
 
 # Building
 
