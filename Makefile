@@ -75,7 +75,9 @@ $(OUTPUT)/%.skel.h: $(OUTPUT)/%.bpf.o | $(OUTPUT)
 	$(call msg,GEN-SKEL,$@)
 	$(Q)$(BPFTOOL) gen skeleton $< > $@
 
-cJSON.o: cJSON.c
+$(OUTPUT)/cJSON.o: libs/cJSON.c
+	$(call msg,CC,$@)
+	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -c $(filter %.c,$^) -o $@
 
 # Build user-space code
 $(patsubst %,$(OUTPUT)/%.o,$(APPS)): %.o: %.skel.h
@@ -85,7 +87,7 @@ $(OUTPUT)/%.o: %.c $(wildcard %.h) | $(OUTPUT)
 	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -c $(filter %.c,$^) -o $@
 
 # Build application binary
-$(APPS): %: $(OUTPUT)/%.o cJSON.o $(LIBBPF_OBJ) | $(OUTPUT)
+$(APPS): %: $(OUTPUT)/%.o $(OUTPUT)/cJSON.o $(LIBBPF_OBJ) | $(OUTPUT)
 	$(call msg,BINARY,$@)
 	$(Q)$(CC) $(CFLAGS) $^ -lelf -lz -o $@
 
