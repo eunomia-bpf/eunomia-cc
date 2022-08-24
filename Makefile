@@ -103,16 +103,27 @@ $(OUTPUT)/ebpf_ast.json: client.bpf.c event.h
 	$(Q)$(CLANG) -Xclang -ast-dump=json -I$(OUTPUT) -fsyntax-only client.bpf.c > $(OUTPUT)/event_ast.json
 
 # dump memory layout of ebpf export ring buffer
-$(OUTPUT)/event_layout.json: libs/event.c event.h
+$(OUTPUT)/event_layout.json: event.h
 	$(call msg,DUMP_LLVM_MEMORY_LAYOUT)
-	$(Q)$(CLANG) -cc1 -fdump-record-layouts-simple $(CLANG_BPF_SYS_INCLUDES) -emit-llvm -D__TARGET_ARCH_$(ARCH) libs/event.c > $(OUTPUT)/event_layout.txt
+	$(Q) python $(PYTHON_SCRIPTS)/event_mem_layout.py fix_event_c
+	$(Q)$(CLANG) -cc1 -fdump-record-layouts-simple $(CLANG_BPF_SYS_INCLUDES) -emit-llvm -D__TARGET_ARCH_$(ARCH) $(OUTPUT)/rb_export_event.c > $(OUTPUT)/event_layout.txt
 	$(Q) python $(PYTHON_SCRIPTS)/event_mem_layout.py > $(OUTPUT)/event_layout.json
 
-# dump the final package.json file
-$(OUTPUT)/package.json: $(APPS) $(OUTPUT)/event_layout.json
+# dump the ebpf program data from build binaries and source
+$(OUTPUT)/ebpf_program_without_type.json: $(APPS)
+	$(call msg,DUMP_EBPF_PROGRAM)
+	$(Q)./client $(PACKAGE_NAME) > $(OUTPUT)/ebpf_program_without_type.json
+
+# add the type info for maps and progs in ebpf program data from source
+$(OUTPUT)/ebpf_program.json: $(OUTPUT)/ebpf_program_without_type.json
+	$(call msg,FIX_TYPE_INFO_IN_EBPF)
+	$(Q) python $(PYTHON_SCRIPTS)/fix_ebpf_program_types.py > $(OUTPUT)/ebpf_program.json
+
+# generate the final package.json file
+$(OUTPUT)/package.json: $(APPS) $(OUTPUT)/event_layout.json $(OUTPUT)/ebpf_program.json
 	$(call msg,GENERATE_PACKAGE_JSON)
-	$(Q)./client $(PACKAGE_NAME) > $(OUTPUT)/ebpf_program.json
 	$(Q)python $(PYTHON_SCRIPTS)/merge_json_results.py > $(OUTPUT)/package.json
+	$(Q)python $(PYTHON_SCRIPTS)/check_is_valid_eunomia_ebpf.py
 
 SOURCE_DIR ?= /src/
 
