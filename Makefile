@@ -137,9 +137,12 @@ build:
 	make all
 	cp -u .output/package.json $(SOURCE_DIR)/package.json
 
-.PHONY: docker_image
-docker_image:
+.PHONY: docker
+docker:
 	docker build -t yunwei37/ebpm:latest .
+
+.PHONY: docker-push
+docker-push:
 	docker push yunwei37/ebpm:latest
 
 .PHONY: install_deps

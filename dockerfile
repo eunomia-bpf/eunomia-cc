@@ -1,5 +1,5 @@
 # build run env
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 
 ENV TZ = Asia/Shanghai
 
@@ -11,6 +11,7 @@ RUN apt-get install cmake -y
 
 RUN apt-get install clang -y
 RUN apt-get install llvm -y
+RUN apt-get install python-is-python3 -y
 
 COPY ./. /usr/local/src
 

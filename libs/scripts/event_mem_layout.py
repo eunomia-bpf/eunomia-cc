@@ -32,21 +32,21 @@ def get_struct_memory_layout(f):
                 print("Error: line 6 Size")
                 break
             # print("Size: ", find.group(1))
-            json_data['Size'] = find.group(1)
+            json_data['Size'] = int(find.group(1))
         elif line_num == 7:  # DataSize:1472
             find = re.search(r"DataSize:(\d*)$", line)
             if not find:
                 print("Error: line 7 DataSize")
                 break
             # print("DataSize: ", find.group(1))
-            json_data['DataSize'] = find.group(1)
+            json_data['DataSize'] = int(find.group(1))
         elif line_num == 8:  # Alignment:64
             find = re.search(r"Alignment:(\d*)$", line)
             if not find:
                 print("Error: line 8 Alignment")
                 break
             # print("Alignment: ", find.group(1))
-            json_data['Alignment'] = find.group(1)
+            json_data['Alignment'] = int(find.group(1))
         # FieldOffsets: [0, 32, 64, 96, 128, 192, 256, 384, 1408]
         elif line_num == 9:
             find = re.search(r"FieldOffsets: (.*)>", line)
