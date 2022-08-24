@@ -12,6 +12,7 @@ VMLINUX := libs/vmlinux/$(ARCH)/vmlinux.h
 # libbpf to avoid dependency on system-wide headers, which could be missing or
 # outdated
 INCLUDES := -I$(OUTPUT) -Ilibs/libbpf/include/uapi -I$(dir $(VMLINUX))
+PYTHON_SCRIPTS := $(abspath libs/scripts)
 CFLAGS := -g -Wall -Wno-unused-function #-fsanitize=address
 
 PACKAGE_NAME := client
@@ -105,12 +106,13 @@ $(OUTPUT)/ebpf_ast.json: client.bpf.c event.h
 $(OUTPUT)/event_layout.json: libs/event.c event.h
 	$(call msg,DUMP_LLVM_MEMORY_LAYOUT)
 	$(Q)$(CLANG) -cc1 -fdump-record-layouts-simple $(CLANG_BPF_SYS_INCLUDES) -emit-llvm -D__TARGET_ARCH_$(ARCH) libs/event.c > $(OUTPUT)/event_layout.txt
-	$(Q) python libs/event_mem_layout.py > $(OUTPUT)/event_layout.json
+	$(Q) python $(PYTHON_SCRIPTS)/event_mem_layout.py > $(OUTPUT)/event_layout.json
 
 # dump the final package.json file
 $(OUTPUT)/package.json: $(APPS) $(OUTPUT)/event_layout.json
 	$(call msg,GENERATE_PACKAGE_JSON)
 	$(Q)./client $(PACKAGE_NAME) > $(OUTPUT)/ebpf_program.json
+	$(Q)python $(PYTHON_SCRIPTS)/merge_json_results.py > $(OUTPUT)/package.json
 
 SOURCE_DIR ?= /src/
 

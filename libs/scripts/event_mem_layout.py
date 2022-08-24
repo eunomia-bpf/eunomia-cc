@@ -1,3 +1,4 @@
+# add ringbuffer event type definition to json
 import re
 import json
 
