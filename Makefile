@@ -48,14 +48,6 @@ clean:
 	$(call msg,CLEAN)
 	$(Q)rm -rf $(OUTPUT) $(APPS) client *.o
 
-$(OUTPUT)/event_ast.json: libs/event.c event.h
-	$(call msg,DUMP_EVENT)
-	$(Q)$(CLANG) -Xclang -ast-dump=json -I$(OUTPUT) -fsyntax-only client.c > $(OUTPUT)/event_ast.json
-
-$(OUTPUT)/event_layout.txt: libs/event.c event.h
-	$(call msg,DUMP_EVENT)
-	$(Q)$(CLANG) -cc1 -fdump-record-layouts-simple -emit-llvm libs/event.c > $(OUTPUT)/event_layout.txt
-
 $(OUTPUT) $(OUTPUT)/libbpf:
 	$(call msg,MKDIR,$@)
 	$(Q)mkdir -p $@
@@ -67,11 +59,6 @@ $(LIBBPF_OBJ): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPU
 		    OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@)		      \
 		    INCLUDEDIR= LIBDIR= UAPIDIR=			      \
 		    install
-
-# Get Preprocessor ebpf code
-$(OUTPUT)/prep_ebpf.c: client.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT)
-	$(call msg,BPF,$@)
-	$(Q)$(CLANG) -E -P -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH) $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES) client.bpf.c > $(OUTPUT)/prep_ebpf.c
 
 # Build BPF code
 $(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT)
@@ -104,8 +91,26 @@ $(APPS): %: $(OUTPUT)/%.o $(OUTPUT)/cJSON.o $(OUTPUT)/create_skel_json.o $(LIBBP
 	$(call msg,BINARY,$@)
 	$(Q)$(CC) $(CFLAGS) $^ -lelf -lz -o $@
 
-$(OUTPUT)/package.json: $(APPS) $(OUTPUT)/event_layout.txt
-	$(Q)./client $(PACKAGE_NAME) > $(OUTPUT)/package.json
+# Get Preprocessor ebpf code
+$(OUTPUT)/prep_ebpf.c: client.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT)
+	$(call msg,PREPROCESSOR_EBPF,$@)
+	$(Q)$(CLANG) -E -P -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH) $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES) client.bpf.c > $(OUTPUT)/prep_ebpf.c
+
+# generate AST dump of ebpf data
+$(OUTPUT)/ebpf_ast.json: client.bpf.c event.h
+	$(call msg,DUMP_AST)
+	$(Q)$(CLANG) -Xclang -ast-dump=json -I$(OUTPUT) -fsyntax-only client.bpf.c > $(OUTPUT)/event_ast.json
+
+# dump memory layout of ebpf export ring buffer
+$(OUTPUT)/event_layout.json: libs/event.c event.h
+	$(call msg,DUMP_LLVM_MEMORY_LAYOUT)
+	$(Q)$(CLANG) -cc1 -fdump-record-layouts-simple $(CLANG_BPF_SYS_INCLUDES) -emit-llvm -D__TARGET_ARCH_$(ARCH) libs/event.c > $(OUTPUT)/event_layout.txt
+	$(Q) python libs/event_mem_layout.py > $(OUTPUT)/event_layout.json
+
+# dump the final package.json file
+$(OUTPUT)/package.json: $(APPS) $(OUTPUT)/event_layout.json
+	$(call msg,GENERATE_PACKAGE_JSON)
+	$(Q)./client $(PACKAGE_NAME) > $(OUTPUT)/ebpf_program.json
 
 SOURCE_DIR ?= /src/
 
