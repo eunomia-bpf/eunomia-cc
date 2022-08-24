@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 # from https://github.com/libbpf/libbpf-bootstrap/
-OUTPUT := .output
+OUTPUT ?= .output
 CLANG ?= clang
 LLVM_STRIP ?= llvm-strip
 BPFTOOL ?= $(abspath libs/tools/bpftool)
@@ -12,7 +12,7 @@ VMLINUX := libs/vmlinux/$(ARCH)/vmlinux.h
 # libbpf to avoid dependency on system-wide headers, which could be missing or
 # outdated
 INCLUDES := -I$(OUTPUT) -Ilibs/libbpf/include/uapi -I$(dir $(VMLINUX))
-CFLAGS := -g -Wall -Wno-unused-function
+CFLAGS := -g -Wall -Wno-unused-function #-fsanitize=address
 
 PACKAGE_NAME := client
 APPS = client
@@ -50,7 +50,11 @@ clean:
 
 $(OUTPUT)/event_ast.json: libs/event.c event.h
 	$(call msg,DUMP_EVENT)
-	$(Q)clang -Xclang -ast-dump=json -fsyntax-only libs/event.c > $(OUTPUT)/event_ast.json
+	$(Q)$(CLANG) -Xclang -ast-dump=json -I$(OUTPUT) -fsyntax-only client.c > $(OUTPUT)/event_ast.json
+
+$(OUTPUT)/event_layout.txt: libs/event.c event.h
+	$(call msg,DUMP_EVENT)
+	$(Q)$(CLANG) -cc1 -fdump-record-layouts-simple -emit-llvm libs/event.c > $(OUTPUT)/event_layout.txt
 
 $(OUTPUT) $(OUTPUT)/libbpf:
 	$(call msg,MKDIR,$@)
@@ -63,6 +67,11 @@ $(LIBBPF_OBJ): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPU
 		    OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@)		      \
 		    INCLUDEDIR= LIBDIR= UAPIDIR=			      \
 		    install
+
+# Get Preprocessor ebpf code
+$(OUTPUT)/prep_ebpf.c: client.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT)
+	$(call msg,BPF,$@)
+	$(Q)$(CLANG) -E -P -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH) $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES) client.bpf.c > $(OUTPUT)/prep_ebpf.c
 
 # Build BPF code
 $(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT)
@@ -79,6 +88,10 @@ $(OUTPUT)/cJSON.o: libs/cJSON.c
 	$(call msg,CC,$@)
 	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -c $(filter %.c,$^) -o $@
 
+$(OUTPUT)/create_skel_json.o: libs/create_skel_json.c
+	$(call msg,CC,$@)
+	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -c $(filter %.c,$^) -o $@
+
 # Build user-space code
 $(patsubst %,$(OUTPUT)/%.o,$(APPS)): %.o: %.skel.h
 
@@ -87,11 +100,11 @@ $(OUTPUT)/%.o: %.c $(wildcard %.h) | $(OUTPUT)
 	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -c $(filter %.c,$^) -o $@
 
 # Build application binary
-$(APPS): %: $(OUTPUT)/%.o $(OUTPUT)/cJSON.o $(LIBBPF_OBJ) | $(OUTPUT)
+$(APPS): %: $(OUTPUT)/%.o $(OUTPUT)/cJSON.o $(OUTPUT)/create_skel_json.o $(LIBBPF_OBJ) | $(OUTPUT)
 	$(call msg,BINARY,$@)
 	$(Q)$(CC) $(CFLAGS) $^ -lelf -lz -o $@
 
-$(OUTPUT)/package.json: $(APPS) $(OUTPUT)/event_ast.json
+$(OUTPUT)/package.json: $(APPS) $(OUTPUT)/event_layout.txt
 	$(Q)./client $(PACKAGE_NAME) > $(OUTPUT)/package.json
 
 SOURCE_DIR ?= /src/
