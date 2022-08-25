@@ -1,5 +1,5 @@
 # build run env
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV TZ = Asia/Shanghai
 

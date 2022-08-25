@@ -42,12 +42,13 @@ else
 endif
 
 .PHONY: all
-all: $(OUTPUT)/package.json
+all: $(APPS)
 
+# clean all data
 .PHONY: clean
 clean:
 	$(call msg,CLEAN)
-	$(Q)rm -rf $(OUTPUT) $(APPS) client *.o
+	$(Q)rm -rf $(OUTPUT) $(APPS) *.o
 
 $(OUTPUT) $(OUTPUT)/libbpf:
 	$(call msg,MKDIR,$@)
@@ -102,40 +103,43 @@ $(OUTPUT)/ebpf_ast.json: client.bpf.c event.h
 	$(call msg,DUMP_AST)
 	$(Q)$(CLANG) -Xclang -ast-dump=json -I$(OUTPUT) -fsyntax-only client.bpf.c > $(OUTPUT)/event_ast.json
 
+# dump the ebpf program data from build binaries and source
 # dump memory layout of ebpf export ring buffer
-$(OUTPUT)/event_layout.json: event.h
+# add the type info for maps and progs in ebpf program data from source
+# generate the final package.json file and check
+.PHONY: compile
+compile:
+	make
 	$(call msg,DUMP_LLVM_MEMORY_LAYOUT)
 	$(Q) python $(PYTHON_SCRIPTS)/event_mem_layout.py fix_event_c
-	$(Q)$(CLANG) -cc1 -fdump-record-layouts-simple $(CLANG_BPF_SYS_INCLUDES) -emit-llvm -D__TARGET_ARCH_$(ARCH) $(OUTPUT)/rb_export_event.c > $(OUTPUT)/event_layout.txt
+	$(Q)$(CLANG) -cc1 -fdump-record-layouts-simple $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES) -emit-llvm -D__TARGET_ARCH_$(ARCH) $(OUTPUT)/rb_export_event.c > $(OUTPUT)/event_layout.txt
 	$(Q) python $(PYTHON_SCRIPTS)/event_mem_layout.py > $(OUTPUT)/event_layout.json
-
-# dump the ebpf program data from build binaries and source
-$(OUTPUT)/ebpf_program_without_type.json: $(APPS)
 	$(call msg,DUMP_EBPF_PROGRAM)
 	$(Q)./client $(PACKAGE_NAME) > $(OUTPUT)/ebpf_program_without_type.json
-
-# add the type info for maps and progs in ebpf program data from source
-$(OUTPUT)/ebpf_program.json: $(OUTPUT)/ebpf_program_without_type.json
 	$(call msg,FIX_TYPE_INFO_IN_EBPF)
 	$(Q) python $(PYTHON_SCRIPTS)/fix_ebpf_program_types.py > $(OUTPUT)/ebpf_program.json
-
-# generate the final package.json file
-$(OUTPUT)/package.json: $(APPS) $(OUTPUT)/event_layout.json $(OUTPUT)/ebpf_program.json
 	$(call msg,GENERATE_PACKAGE_JSON)
 	$(Q)python $(PYTHON_SCRIPTS)/merge_json_results.py > $(OUTPUT)/package.json
 	$(Q)python $(PYTHON_SCRIPTS)/check_is_valid_eunomia_ebpf.py
 
 SOURCE_DIR ?= /src/
 
+.PHONY: clean_cache
+clean_cache:
+	$(Q)rm -f $(APPS) $(OUTPUT)/*.json $(OUTPUT)/*.o $(OUTPUT)/*.c $(OUTPUT)/*.h ./*.h ./client.bpf.c
+	$(Q)touch ./event.h
+
 .PHONY: build
 build:
-	cp -f $(SOURCE_DIR)*.bpf.c     ./client.bpf.c
-	sed -i '1s/^/#include "event.h"\n/' ./client.bpf.c
-	cp -f $(SOURCE_DIR)*.bpf.h         ./ || :
-	cp -f $(SOURCE_DIR)*.bpf.h         ./event.h || :
-	cp -f $(SOURCE_DIR)config.json ./config.json || :
-	make all
-	cp -u .output/package.json $(SOURCE_DIR)/package.json
+	$(Q)make clean_cache
+	$(Q)rm -f $(SOURCE_DIR)/package.json
+	$(Q)cp -f $(SOURCE_DIR)*.bpf.c     ./client.bpf.c
+	$(Q)cp -f $(SOURCE_DIR)*.bpf.h     ./ || :
+	$(Q)cp -f $(SOURCE_DIR)*.bpf.h     ./event.h || :
+	$(Q)cp -f $(SOURCE_DIR)config.json ./config.json || :
+	$(Q)make compile
+	$(Q)cp -f .output/package.json $(SOURCE_DIR)/package.json
+	$(Q)make clean_cache
 
 .PHONY: docker
 docker:
