@@ -9,28 +9,27 @@ An CO-RE compile set to help you focus on writing a single eBPF program in the k
 
 The only file you will need to write is:
 
-```console
+```shell
 your_program.bpf.c
-your_program.bpf.h  # optional, if you want to use ringbuf to export events, can go with out it.
+your_program.bpf.h  # optional, if you want to use ring buffer to export events
 ```
 
 after that, simply run this:
 
-```console
-docker run -it -v /path/to/repo/:/src yunwei37/ebpm:latest # use absolute path
+```shell
+$ docker run -it -v /path/to/repo/:/src yunwei37/ebpm:latest # use absolute path
 ```
 
 you will get a `package.json` in your root dir. Just run:
 
-```console
+```shell
 $ sudo ./ecli run package.json
 ```
 
 to start it! you can download `ecli` tool from [eunomia-bpf/releases](https://github.com/eunomia-bpf/eunomia-bpf/releases), we have pre-build binaries for linux x86. Small and No dependencies, besides glibc and glibcxx. Or just run this:
 
-```console
-wget https://aka.pw/bpf-ecli -O ecli
-chmod +x ecli
+```shell
+$ wget https://aka.pw/bpf-ecli -O ecli && chmod +x ecli
 ```
 
 The ebpf compiled code can run on different kernel versions(CO-RE).
@@ -40,8 +39,8 @@ see: [github.com/eunomia-bpf/eunomia-bpf](https://github.com/eunomia-bpf/eunomia
 
 simply run:
 
-```console
-docker run -it -v /path/to/repo/:/src yunwei37/ebpm
+```shell
+$ docker run -it -v /path/to/repo:/src yunwei37/ebpm
 ```
 
 Or you can do that without a container, which is listed below:
@@ -54,7 +53,7 @@ Use this as a github action, to compile online: see [eunomia-bpf/ebpm-template)]
 2. modify the `bootstrap.bpf.c`, commit it and wait for the workflow to stop
 3. Run the `ecli` with remote url:
 
-```console
+```shell
 $ sudo ./ecli run https://eunomia-bpf.github.io/ebpm-template/package.json
 ```
 
@@ -71,12 +70,12 @@ You will need `clang`, `libelf` and `zlib` to build the examples, package names 
 
 On Ubuntu/Debian, you need:
 ```shell
-$ apt install clang libelf1 libelf-dev zlib1g-dev llvm
+$ apt install clang libelf1 libelf-dev zlib1g-dev llvm python
 ```
 
 On CentOS/Fedora, you need:
 
-```console
+```shell
 $ dnf install clang elfutils-libelf elfutils-libelf-devel zlib-devel
 ```
 
@@ -84,24 +83,51 @@ $ dnf install clang elfutils-libelf elfutils-libelf-devel zlib-devel
 
 Makefile build the toolchain:
 
-```console
+```shell
 $ git submodule update --init --recursive       # check out libbpf
 $ make
 ```
 
 After the toolchain has been build, just run:
 
-```console
+```shell
 $ cd ebpm-bootstrap
 $ SOURCE_DIR=[you repo path] make build
 ```
 
 to compile it.
 
-## build with you own ebpf code
+## Usage
 
-just replaced `client.bpf.c` with you own ebpf code!
+1. We use the same c ebpf code as libbpf, so most libbpf ebpf c code can run without any modification.
+2. Supported ebpf program types: `kprobe`, `tracepoint`, `fentry`, we will add more types in the future.
+3. If you want to use ring buffer to export events, you need to add `your_program.bpf.h` to your repo, and
+   define the export data type in it, the export data type should be a C `struct`, for example:
 
-If you need:
-- check the configs in `config.json`.
-- declare your ring buffer output event in `event.h`, if you have it.
+    ```c
+    struct process_event {
+        int pid;
+        int ppid;
+        unsigned exit_code;
+        unsigned long long duration_ns;
+        char comm[TASK_COMM_LEN];
+        char filename[MAX_FILENAME_LEN];
+        int exit_event;
+    };
+    ```
+
+    The name and field types are not limited, but we will prefer use standard C types. If multiple struct
+    exists in the header, we will use the first one. The feature is only enabled if we found a `BPF_MAP_TYPE_RINGBUF`
+    map exists in the ebpf program.
+
+## Road-map
+
+- [ ] use lua for ebpf package load config
+- [ ] add more ebpf program type support: `xdp`, `perf event` and `uprobe`
+- [ ] add more possibilities from `libbpf`
+- [ ] provide python, go and others sdk
+- [ ] provide better support for old kernels
+
+## License
+
+MIT LICENSE
