@@ -145,7 +145,6 @@ build:
 	$(Q)cp -f $(SOURCE_CONFIG_FILE)					./config.json 2>/dev/null || :
 	$(Q)make compile
 	$(Q)cp -f .output/package.json $(SOURCE_OUTPUT_PACKAGE_FILE)
-	$(Q)make clean_cache
 
 .PHONY: docker
 docker:
