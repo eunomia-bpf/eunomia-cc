@@ -123,6 +123,12 @@ compile:
 	$(Q)python $(PYTHON_SCRIPTS)/check_is_valid_eunomia_ebpf.py
 
 SOURCE_DIR ?= /src/
+SOURCE_EBPF_FILE ?= $(SOURCE_DIR)*.bpf.c
+SOURCE_EBPF_HEADERS ?= $(SOURCE_DIR)*.h
+SOURCE_OUTPUT_DEFINE_HEADER ?= $(SOURCE_DIR)*.bpf.h
+SOURCE_CONFIG_FILE ?= $(SOURCE_DIR)config.json
+
+SOURCE_OUTPUT_PACKAGE_FILE ?= $(SOURCE_DIR)/package.json
 
 .PHONY: clean_cache
 clean_cache:
@@ -132,13 +138,13 @@ clean_cache:
 .PHONY: build
 build:
 	$(Q)make clean_cache
-	$(Q)rm -f $(SOURCE_DIR)/package.json
-	$(Q)cp -f $(SOURCE_DIR)*.bpf.c     ./client.bpf.c
-	$(Q)cp -f $(SOURCE_DIR)*.bpf.h     ./ || :
-	$(Q)cp -f $(SOURCE_DIR)*.bpf.h     ./event.h || :
-	$(Q)cp -f $(SOURCE_DIR)config.json ./config.json || :
+	$(Q)rm -f $(SOURCE_OUTPUT_PACKAGE_FILE)
+	$(Q)cp -f $(SOURCE_EBPF_FILE)					./client.bpf.c
+	$(Q)cp -f $(SOURCE_EBPF_HEADERS)				./  2>/dev/null || :
+	$(Q)cp -f $(SOURCE_OUTPUT_DEFINE_HEADER)		./event.h 2>/dev/null || :
+	$(Q)cp -f $(SOURCE_CONFIG_FILE)					./config.json 2>/dev/null || :
 	$(Q)make compile
-	$(Q)cp -f .output/package.json $(SOURCE_DIR)/package.json
+	$(Q)cp -f .output/package.json $(SOURCE_OUTPUT_PACKAGE_FILE)
 	$(Q)make clean_cache
 
 .PHONY: docker
