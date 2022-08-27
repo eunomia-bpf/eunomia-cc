@@ -17,7 +17,7 @@ with open(ring_buffer_layout_data) as f:
     maps_data = global_data["maps"]
     ring_buffer_count = 0
     for map in maps_data:
-        if map["type"] == "BPF_MAP_TYPE_RINGBUF":
+        if map["type"] == "BPF_MAP_TYPE_RINGBUF" or map["type"] == "BPF_MAP_TYPE_PERF_EVENT_ARRAY":
             ring_buffer_count = ring_buffer_count + 1
 
     if ring_buffer_count > 1:

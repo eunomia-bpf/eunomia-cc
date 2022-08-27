@@ -79,7 +79,7 @@ On CentOS/Fedora, you need:
 $ dnf install clang elfutils-libelf elfutils-libelf-devel zlib-devel
 ```
 
-## Build
+## Build locally
 
 Makefile build the toolchain:
 
@@ -91,8 +91,7 @@ $ make
 After the toolchain has been build, just run:
 
 ```shell
-$ cd ebpm-bootstrap
-$ SOURCE_DIR=[you repo path] make build
+$ python ecc.py [you file to compile]
 ```
 
 to compile it.

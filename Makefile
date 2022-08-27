@@ -131,7 +131,7 @@ clean_cache:
 
 .PHONY: build
 build:
-	$(Q)python ecc.py -d $(SOURCE_DIR) -i $(SOURCE_DIR) *.bpf.c
+	$(Q)python ecc.py -d $(SOURCE_DIR) -i $(SOURCE_DIR) $(shell ls $(SOURCE_DIR)*.bpf.c)
 
 .PHONY: docker
 docker:

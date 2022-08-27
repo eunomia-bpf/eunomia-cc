@@ -15,8 +15,6 @@ RUN apt-get install python-is-python3 -y
 
 COPY ./. /usr/local/src
 
-RUN make
-
 VOLUME /data/
 
 ENTRYPOINT ["/bin/bash","-l","-c"]

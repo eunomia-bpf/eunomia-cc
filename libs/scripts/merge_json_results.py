@@ -23,9 +23,11 @@ with open(ebpf_program_data) as f:
 with open(ring_buffer_layout_data) as f:
     ring_buffer_data = json.load(f)
     maps_data = global_data["maps"]
-    # FIX ME: we only support one RING_BUFFER
+    # FIX ME: we only support one RING_BUFFER or perf buffer
     for map in maps_data:
-        if map["type"] == "BPF_MAP_TYPE_RINGBUF":
-            map["ring_buffer_export"] = ring_buffer_data[0]
+        if map["type"] == "BPF_MAP_TYPE_RINGBUF" or map["type"] == "BPF_MAP_TYPE_PERF_EVENT_ARRAY":
+            if len(ring_buffer_data) == 0:
+                print("WARN: the BPF_MAP_TYPE_RINGBUF export is not used in the ebpf program.")
+            map["export_data_types"] = ring_buffer_data[0]
 
 print(json.dumps(global_data))
