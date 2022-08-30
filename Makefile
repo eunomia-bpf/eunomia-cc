@@ -146,6 +146,18 @@ install_deps:
 	sudo apt-get update
 	sudo apt-get -y install clang libelf1 libelf-dev zlib1g-dev cmake clang llvm
 
+# test with the files in eunomia-bpf
+TEST_CASES_DIRS=$(shell ls -l eunomia-bpf/bpftools/examples | grep ^d | awk '{print $$9}')
+.PHONY: test
+test:
+	rm -rf eunomia-bpf/
+	git clone https://github.com/eunomia-bpf/eunomia-bpf --depth 1
+	$(MAKE) $(TEST_CASES_DIRS)
+
+$(TEST_CASES_DIRS):
+	@echo $@
+	SOURCE_DIR=eunomia-bpf/bpftools/examples/$@/ $(MAKE) build
+
 # delete failed targets
 .DELETE_ON_ERROR:
 

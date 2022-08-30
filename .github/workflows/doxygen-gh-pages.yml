@@ -41,6 +41,10 @@ jobs:
               make install_deps
               make
 
+      - name: test compile
+        run:  |
+              make test
+
       - name: Setup Pages
         uses: actions/configure-pages@v1
       - name: Upload artifact

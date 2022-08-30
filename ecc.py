@@ -58,7 +58,7 @@ def main():
     res = os.system("make compile")
     if res != 0:
         print("compile failed!")
-        exit(0)
+        exit(1)
     os.system("cp -f " + compile_output_path + " " + output_path)
 
 

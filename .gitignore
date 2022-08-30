@@ -4,3 +4,4 @@ build/
 client
 *.o
 libs/event.ll
+eunomia-bpf/
