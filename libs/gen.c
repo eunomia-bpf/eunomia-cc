@@ -302,14 +302,15 @@ static int codegen_subskel_datasecs(struct bpf_object *obj, const char *obj_name
 	const struct btf_var_secinfo *sec_var;
 	int i, err = 0, vlen;
 	char map_ident[256], sec_ident[256];
-	bool strip_mods = false, needs_typeof = false;
+	bool strip_mods = false;
 	const char *sec_name, *var_name;
 	__u32 var_type_id;
 
 	d = btf_dump__new(btf, codegen_btf_dump_printf, NULL, NULL);
 	if (!d)
 		return -errno;
-
+    printf("[");
+    int sec_count = 0;
 	bpf_object__for_each_map(map, obj) {
 		/* only generate definitions for memory-mapped internal maps */
 		if (!is_internal_mmapable_map(map, map_ident, sizeof(map_ident)))
@@ -324,8 +325,12 @@ static int codegen_subskel_datasecs(struct bpf_object *obj, const char *obj_name
 			continue;
 
 		strip_mods = strcmp(sec_name, ".kconfig") != 0;
-		printf("	struct %s__%s {\n", obj_name, sec_ident);
-
+        if (sec_count > 0) {
+            printf(", ");
+        }
+        sec_count++;
+		// printf("	struct %s__%s {\n", obj_name, sec_ident);
+        printf("{\"sec_ident\":\"%s\", \"sec_data\":[", sec_ident);
 		sec_var = btf_var_secinfos(sec);
 		vlen = btf_vlen(sec);
 		for (i = 0; i < vlen; i++, sec_var++) {
@@ -348,29 +353,34 @@ static int codegen_subskel_datasecs(struct bpf_object *obj, const char *obj_name
 			 * underlying type of the variable (e.g. KIND_INT).
 			 */
 			var = skip_mods_and_typedefs(btf, var->type, NULL);
-
-			printf("\t\t");
+            if (i != 0) {
+                printf(",");
+            }
+			printf("{\"type\":\"");
 			/* Func and array members require special handling.
 			 * Instead of producing `typename *var`, they produce
 			 * `typeof(typename) *var`. This allows us to keep a
 			 * similar syntax where the identifier is just prefixed
 			 * by *, allowing us to ignore C declaration minutiae.
 			 */
-			needs_typeof = btf_is_array(var) || btf_is_ptr_to_func_proto(btf, var);
-			if (needs_typeof)
-				printf("typeof(");
+			// needs_typeof = btf_is_array(var) || btf_is_ptr_to_func_proto(btf, var);
+			// if (needs_typeof)
+			// 	printf("typeof(");
 
 			err = btf_dump__emit_type_decl(d, var_type_id, &opts);
 			if (err)
 				goto out;
 
-			if (needs_typeof)
-				printf(")");
+			// if (needs_typeof)
+			// 	printf(")");
 
-			printf(" *%s;\n", var_name);
+			printf("\",\"name\":\"%s\"\n", var_name);
+            printf(",\"size\":\"%d\"\n", var->size);
+            printf(",\"btf_type_id\":\"%d\"}\n", var_type_id);
 		}
-		printf("	} %s;\n", sec_ident);
+		printf("	]}\n");
 	}
+    printf("]");
 
 out:
 	btf_dump__free(d);
@@ -430,7 +440,8 @@ static void codegen(const char *template, ...)
 
 	/* print out using adjusted template */
 	va_start(args, template);
-	n = vprintf(s, args);
+    // skip gen code
+	// n = vprintf(s, args);
 	va_end(args);
 
 	free(s);
@@ -1359,7 +1370,8 @@ static int do_subskeleton(int argc, char **argv)
 		struct bpf_object_subskeleton *subskel;			    \n\
 	", obj_name, header_guard);
 
-	if (map_cnt) {
+    // skip gen code
+	if (map_cnt && false) {
 		printf("\tstruct {\n");
 		bpf_object__for_each_map(map, obj) {
 			if (!get_map_ident(map, ident, sizeof(ident)))
@@ -1369,7 +1381,8 @@ static int do_subskeleton(int argc, char **argv)
 		printf("\t} maps;\n");
 	}
 
-	if (prog_cnt) {
+    // skip gen code
+	if (prog_cnt && false) {
 		printf("\tstruct {\n");
 		bpf_object__for_each_program(prog, obj) {
 			printf("\t\tstruct bpf_program *%s;\n",
@@ -1508,17 +1521,16 @@ static int do_help(int argc, char **argv)
 {
 
 	fprintf(stderr,
-		"Usage: %1$s %2$s object OUTPUT_FILE INPUT_FILE [INPUT_FILE...]\n"
-		"       %1$s %2$s skeleton FILE [name OBJECT_NAME]\n"
-		"       %1$s %2$s subskeleton FILE [name OBJECT_NAME]\n"
-		"       %1$s %2$s min_core_btf INPUT OUTPUT OBJECT [OBJECT...]\n"
-		"       %1$s %2$s help\n"
+		"Usage: object OUTPUT_FILE INPUT_FILE [INPUT_FILE...]\n"
+		"       skeleton FILE [name OBJECT_NAME]\n"
+		"       subskeleton FILE [name OBJECT_NAME]\n"
+		"       min_core_btf INPUT OUTPUT OBJECT [OBJECT...]\n"
+		"       help\n"
 		"\n"
 		"       "
          " |\n"
 		"                    {-L|--use-loader} }\n"
-		""
-		, "gen");
+		"");
 
 	return 0;
 }

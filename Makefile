@@ -77,11 +77,11 @@ $(OUTPUT)/cJSON.o: libs/cJSON.c
 	$(call msg,CC,$@)
 	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -c $(filter %.c,$^) -o $@
 
-$(OUTPUT)/create_skel_json.o: libs/create_skel_json.c
+$(OUTPUT)/create_skel_json.o: libs/create_skel_json.c $(OUTPUT)/secgen
 	$(call msg,CC,$@)
 	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -c $(filter %.c,$^) -o $@
 
-$(OUTPUT)/codegen: libs/gen.c
+$(OUTPUT)/secgen: libs/gen.c
 	$(call msg,CC,$@)
 	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -Ilibs/libbpf/src -Ilibs/libbpf/include $(filter %.c,$^) $(LIBBPF_OBJ) -lelf -lz -o $@
 
@@ -107,6 +107,11 @@ $(OUTPUT)/ebpf_ast.json: client.bpf.c event.h
 	$(call msg,DUMP_AST)
 	$(Q)$(CLANG) -Xclang -ast-dump=json -I$(OUTPUT) -fsyntax-only client.bpf.c > $(OUTPUT)/event_ast.json
 
+# generate AST dump of ebpf data
+$(OUTPUT)/ebpf_btf.json: $(OUTPUT)/client.bpf.o | $(OUTPUT)
+	$(call msg,GEN-BTF-DATA,$@)
+	$(Q)$(BPFTOOL) btf dump file $< -j > $@
+
 # dump the ebpf program data from build binaries and source
 # dump memory layout of ebpf export ring buffer
 # add the type info for maps and progs in ebpf program data from source
@@ -120,6 +125,7 @@ compile:
 	$(Q) python $(PYTHON_SCRIPTS)/event_mem_layout.py > $(OUTPUT)/event_layout.json
 	$(call msg,DUMP_EBPF_PROGRAM)
 	$(Q)./client $(PACKAGE_NAME) > $(OUTPUT)/ebpf_program_without_type.json
+	$(Q)$(OUTPUT)/secgen $(OUTPUT)/client.bpf.o > $(OUTPUT)/ebpf_secdata.json
 	$(call msg,FIX_TYPE_INFO_IN_EBPF)
 	$(Q) python $(PYTHON_SCRIPTS)/fix_ebpf_program_types.py > $(OUTPUT)/ebpf_program.json
 	$(call msg,GENERATE_PACKAGE_JSON)
