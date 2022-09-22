@@ -34,13 +34,16 @@ with open(ring_buffer_layout_data) as f:
 
 # merge section data eg.rodata
 with open(section_type_data) as f:
-    section_data = json.load(f)
-    maps_data = global_data["maps"]
-    for map in maps_data:
-        for sec in section_data:
-            sec_ident = sec["sec_ident"]
-            # find correct section
-            if map["name"].endswith("." + sec_ident):
-                map["sec_data"] = sec["sec_data"]
+    try:
+        section_data = json.load(f)
+        maps_data = global_data["maps"]
+        for map in maps_data:
+            for sec in section_data:
+                sec_ident = sec["sec_ident"]
+                # find correct section
+                if map["name"].endswith("." + sec_ident):
+                    map["sec_data"] = sec["sec_data"]
+    except:
+        print("")
 
 print(json.dumps(global_data))
