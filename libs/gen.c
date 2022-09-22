@@ -14,16 +14,17 @@
 #include <unistd.h>
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
-#include <bpf/libbpf_internal.h>
+#include <libbpf_internal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <bpf/btf.h>
-
-#include "json_writer.h"
-#include "main.h"
+#include "hashmap.h"
+#include <linux/kernel.h>
 
 #define MAX_OBJ_NAME_LEN 64
+
+#define p_err printf
 
 static void sanitize_identifier(char *name)
 {
@@ -919,38 +920,10 @@ static int do_skeleton(int argc, char **argv)
 	struct btf *btf;
 	struct stat st;
 
-	if (!REQ_ARGS(1)) {
-		usage();
-		return -1;
-	}
-	file = GET_ARG();
-
-	while (argc) {
-		if (!REQ_ARGS(2))
-			return -1;
-
-		if (is_prefix(*argv, "name")) {
-			NEXT_ARG();
-
-			if (obj_name[0] != '\0') {
-				p_err("object name already specified");
-				return -1;
-			}
-
-			strncpy(obj_name, *argv, MAX_OBJ_NAME_LEN - 1);
-			obj_name[MAX_OBJ_NAME_LEN - 1] = '\0';
-		} else {
-			p_err("unknown arg %s", *argv);
-			return -1;
-		}
-
-		NEXT_ARG();
-	}
-
-	if (argc) {
-		p_err("extra unknown arguments");
-		return -1;
-	}
+    if (argc != 2) {
+        return -1;
+    }
+	file = argv[1];
 
 	if (stat(file, &st)) {
 		p_err("failed to stat() %s: %s", file, strerror(errno));
@@ -972,9 +945,6 @@ static int do_skeleton(int argc, char **argv)
 	if (obj_name[0] == '\0')
 		get_obj_name(obj_name, file);
 	opts.object_name = obj_name;
-	if (verifier_logs)
-		/* log_level1 + log_level2 + stats, but not stable UAPI */
-		opts.kernel_log_level = 1 + 2 + 4;
 	obj = bpf_object__open_mem(obj_data, file_sz, &opts);
 	err = libbpf_get_error(obj);
 	if (err) {
@@ -999,7 +969,7 @@ static int do_skeleton(int argc, char **argv)
 	}
 
 	get_header_guard(header_guard, obj_name, "SKEL_H");
-	if (use_loader) {
+	if (false) {
 		codegen("\
 		\n\
 		/* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */   \n\
@@ -1040,7 +1010,7 @@ static int do_skeleton(int argc, char **argv)
 		bpf_object__for_each_map(map, obj) {
 			if (!get_map_ident(map, ident, sizeof(ident)))
 				continue;
-			if (use_loader)
+			if (false)
 				printf("\t\tstruct bpf_map_desc %s;\n", ident);
 			else
 				printf("\t\tstruct bpf_map *%s;\n", ident);
@@ -1051,7 +1021,7 @@ static int do_skeleton(int argc, char **argv)
 	if (prog_cnt) {
 		printf("\tstruct {\n");
 		bpf_object__for_each_program(prog, obj) {
-			if (use_loader)
+			if (false)
 				printf("\t\tstruct bpf_prog_desc %s;\n",
 				       bpf_program__name(prog));
 			else
@@ -1061,7 +1031,7 @@ static int do_skeleton(int argc, char **argv)
 		printf("\t} progs;\n");
 		printf("\tstruct {\n");
 		bpf_object__for_each_program(prog, obj) {
-			if (use_loader)
+			if (false)
 				printf("\t\tint %s_fd;\n",
 				       bpf_program__name(prog));
 			else
@@ -1077,7 +1047,7 @@ static int do_skeleton(int argc, char **argv)
 		if (err)
 			goto out;
 	}
-	if (use_loader) {
+	if (false) {
 		err = gen_trace(obj, obj_name, header_guard);
 		goto out;
 	}
@@ -1291,43 +1261,7 @@ static int do_subskeleton(int argc, char **argv)
 	const struct btf_var_secinfo *var;
 	struct stat st;
 
-	if (!REQ_ARGS(1)) {
-		usage();
-		return -1;
-	}
-	file = GET_ARG();
-
-	while (argc) {
-		if (!REQ_ARGS(2))
-			return -1;
-
-		if (is_prefix(*argv, "name")) {
-			NEXT_ARG();
-
-			if (obj_name[0] != '\0') {
-				p_err("object name already specified");
-				return -1;
-			}
-
-			strncpy(obj_name, *argv, MAX_OBJ_NAME_LEN - 1);
-			obj_name[MAX_OBJ_NAME_LEN - 1] = '\0';
-		} else {
-			p_err("unknown arg %s", *argv);
-			return -1;
-		}
-
-		NEXT_ARG();
-	}
-
-	if (argc) {
-		p_err("extra unknown arguments");
-		return -1;
-	}
-
-	if (use_loader) {
-		p_err("cannot use loader for subskeletons");
-		return -1;
-	}
+	file = argv[1];
 
 	if (stat(file, &st)) {
 		p_err("failed to stat() %s: %s", file, strerror(errno));
@@ -1570,53 +1504,8 @@ out:
 	return err;
 }
 
-static int do_object(int argc, char **argv)
-{
-	struct bpf_linker *linker;
-	const char *output_file, *file;
-	int err = 0;
-
-	if (!REQ_ARGS(2)) {
-		usage();
-		return -1;
-	}
-
-	output_file = GET_ARG();
-
-	linker = bpf_linker__new(output_file, NULL);
-	if (!linker) {
-		p_err("failed to create BPF linker instance");
-		return -1;
-	}
-
-	while (argc) {
-		file = GET_ARG();
-
-		err = bpf_linker__add_file(linker, file, NULL);
-		if (err) {
-			p_err("failed to link '%s': %s (%d)", file, strerror(err), err);
-			goto out;
-		}
-	}
-
-	err = bpf_linker__finalize(linker);
-	if (err) {
-		p_err("failed to finalize ELF file: %s (%d)", strerror(err), err);
-		goto out;
-	}
-
-	err = 0;
-out:
-	bpf_linker__free(linker);
-	return err;
-}
-
 static int do_help(int argc, char **argv)
 {
-	if (json_output) {
-		jsonw_null(json_wtr);
-		return 0;
-	}
 
 	fprintf(stderr,
 		"Usage: %1$s %2$s object OUTPUT_FILE INPUT_FILE [INPUT_FILE...]\n"
@@ -1625,10 +1514,11 @@ static int do_help(int argc, char **argv)
 		"       %1$s %2$s min_core_btf INPUT OUTPUT OBJECT [OBJECT...]\n"
 		"       %1$s %2$s help\n"
 		"\n"
-		"       " HELP_SPEC_OPTIONS " |\n"
+		"       "
+         " |\n"
 		"                    {-L|--use-loader} }\n"
-		"",
-		bin_name, "gen");
+		""
+		, "gen");
 
 	return 0;
 }
@@ -2297,44 +2187,25 @@ out:
 	return err;
 }
 
-static int do_min_core_btf(int argc, char **argv)
+// static const struct cmd cmds[] = {
+// 	{ "object",		do_object },
+// 	{ "skeleton",		do_skeleton },
+// 	{ "subskeleton",	do_subskeleton },
+// 	{ "min_core_btf",	do_min_core_btf},
+// 	{ "help",		do_help },
+// 	{ 0 }
+// };
+
+// static const struct cmd cmds[] = {
+// 	{ "object",		do_object },
+// 	{ "skeleton",		do_skeleton },
+// 	{ "subskeleton",	do_subskeleton },
+// 	{ "min_core_btf",	do_min_core_btf},
+// 	{ "help",		do_help },
+// 	{ 0 }
+// };
+
+int main(int argc, char **argv)
 {
-	const char *input, *output, **objs;
-	int i, err;
-
-	if (!REQ_ARGS(3)) {
-		usage();
-		return -1;
-	}
-
-	input = GET_ARG();
-	output = GET_ARG();
-
-	objs = (const char **) calloc(argc + 1, sizeof(*objs));
-	if (!objs) {
-		p_err("failed to allocate array for object names");
-		return -ENOMEM;
-	}
-
-	i = 0;
-	while (argc)
-		objs[i++] = GET_ARG();
-
-	err = minimize_btf(input, output, objs);
-	free(objs);
-	return err;
-}
-
-static const struct cmd cmds[] = {
-	{ "object",		do_object },
-	{ "skeleton",		do_skeleton },
-	{ "subskeleton",	do_subskeleton },
-	{ "min_core_btf",	do_min_core_btf},
-	{ "help",		do_help },
-	{ 0 }
-};
-
-int do_gen(int argc, char **argv)
-{
-	return cmd_select(cmds, argc, argv, do_help);
+	return do_subskeleton(argc, argv);
 }
