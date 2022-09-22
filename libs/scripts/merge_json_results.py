@@ -6,6 +6,7 @@ output_dir = "./.output/"
 config_filename = "./config.json"
 ebpf_program_data = os.path.join(output_dir, "ebpf_program.json")
 ring_buffer_layout_data = os.path.join(output_dir, "event_layout.json")
+section_type_data = os.path.join(output_dir, "ebpf_secdata.json")
 
 global_data = {}
 
@@ -30,5 +31,16 @@ with open(ring_buffer_layout_data) as f:
                 print("WARN: the BPF_MAP_TYPE_RINGBUF export is not used in the ebpf program.")
                 continue
             map["export_data_types"] = ring_buffer_data[0]
+
+# merge section data eg.rodata
+with open(section_type_data) as f:
+    section_data = json.load(f)
+    maps_data = global_data["maps"]
+    for map in maps_data:
+        for sec in section_data:
+            sec_ident = sec["sec_ident"]
+            # find correct section
+            if map["name"].endswith("." + sec_ident):
+                map["sec_data"] = sec["sec_data"]
 
 print(json.dumps(global_data))
