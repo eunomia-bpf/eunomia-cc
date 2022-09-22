@@ -81,6 +81,10 @@ $(OUTPUT)/create_skel_json.o: libs/create_skel_json.c
 	$(call msg,CC,$@)
 	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -c $(filter %.c,$^) -o $@
 
+$(OUTPUT)/codegen: libs/gen.c
+	$(call msg,CC,$@)
+	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -Ilibs/libbpf/src -Ilibs/libbpf/include $(filter %.c,$^) $(LIBBPF_OBJ) -lelf -lz -o $@
+
 # Build user-space code
 $(patsubst %,$(OUTPUT)/%.o,$(APPS)): %.o: %.skel.h
 

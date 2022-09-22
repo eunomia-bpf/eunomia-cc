@@ -18,15 +18,7 @@ static cJSON *create_map_json(struct bpf_map_skeleton *bpf_map)
         return NULL;
     }
     cJSON *map = cJSON_CreateObject();
-    if (map == NULL)
-    {
-        return NULL;
-    }
     cJSON *name = cJSON_CreateString(bpf_map->name);
-    if (name == NULL)
-    {
-        return NULL;
-    }
     cJSON_AddItemToObject(map, "name", name);
     return map;
 }
@@ -38,15 +30,7 @@ static cJSON *create_prog_json(struct bpf_prog_skeleton *bpf_prog)
         return NULL;
     }
     cJSON *prog = cJSON_CreateObject();
-    if (prog == NULL)
-    {
-        return NULL;
-    }
     cJSON *name = cJSON_CreateString(bpf_prog->name);
-    if (name == NULL)
-    {
-        return NULL;
-    }
     cJSON_AddItemToObject(prog, "name", name);
     return prog;
 }
@@ -58,12 +42,7 @@ cJSON *create_skel_json(cJSON *config_json)
         return NULL;
     }
     struct client_bpf *obj = malloc(sizeof(struct client_bpf));
-    if (!obj)
-    {
-        return NULL;
-    }
     // TODO: this maybe unnecessary, use bpftool dump json instead
-
     if (client_bpf__create_skeleton(obj))
     {
         return NULL;
@@ -78,18 +57,10 @@ cJSON *create_skel_json(cJSON *config_json)
     unsigned char *base64_buffer = NULL;
 
     data_sz = cJSON_CreateNumber(obj->skeleton->data_sz);
-    if (data_sz == NULL)
-    {
-        return NULL;
-    }
     cJSON_AddItemToObject(config_json, "data_sz", data_sz);
 
     base64_buffer = base64_encode(obj->skeleton->data, obj->skeleton->data_sz, &out_len);
     data = cJSON_CreateString((const char *)base64_buffer);
-    if (data == NULL)
-    {
-        return NULL;
-    }
     cJSON_AddItemToObject(config_json, "data", data);
     free(base64_buffer);
 
@@ -97,10 +68,6 @@ cJSON *create_skel_json(cJSON *config_json)
     for (size_t i = 0; i < obj->skeleton->map_cnt; ++i)
     {
         map = create_map_json(&obj->skeleton->maps[i]);
-        if (map == NULL)
-        {
-            return NULL;
-        }
         cJSON_AddItemToArray(maps, map);
     }
     cJSON_AddItemToObject(config_json, "maps", maps);
@@ -109,10 +76,6 @@ cJSON *create_skel_json(cJSON *config_json)
     for (size_t i = 0; i < obj->skeleton->prog_cnt; ++i)
     {
         prog = create_prog_json(&obj->skeleton->progs[i]);
-        if (map == NULL)
-        {
-            return NULL;
-        }
         cJSON_AddItemToArray(progs, prog);
     }
     cJSON_AddItemToObject(config_json, "progs", progs);

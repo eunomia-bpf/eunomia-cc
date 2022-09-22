@@ -40,10 +40,16 @@ $ git submodule update --init --recursive       # check out libbpf
 $ make
 ```
 
-After the toolchain has been build, just run:
+After the toolchain has been build, run:
 
 ```shell
 $ python ecc.py [you file to compile]
+```
+
+or
+
+```shell
+SOURCE_DIR=[target dir] make build
 ```
 
 to compile it.
