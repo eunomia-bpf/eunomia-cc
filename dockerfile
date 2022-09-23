@@ -5,13 +5,7 @@ ENV TZ = Asia/Shanghai
 
 WORKDIR /usr/local/src
 
-RUN apt-get update -y && apt-get install -y libssl-dev libcurl4-openssl-dev libcurl4 libelf-dev
-
-RUN apt-get install cmake -y
-
-RUN apt-get install clang -y
-RUN apt-get install llvm -y
-RUN apt-get install python-is-python3 -y
+RUN apt-get update -y && apt-get install -y libelf1 libelf-dev zlib1g-dev clang python-is-python3
 
 COPY ./. /usr/local/src
 

@@ -375,7 +375,7 @@ static int codegen_subskel_datasecs(struct bpf_object *obj, const char *obj_name
 			// 	printf(")");
 
 			printf("\",\"name\":\"%s\"\n", var_name);
-            printf(",\"size\":\"%d\"\n}", var->size);
+            printf(",\"size\":%d\n}", var->size);
 			// FIXME: shall we need btf_type_id?
             // printf(",\"btf_type_id\":\"%d\"}\n", var_type_id);
 		}
