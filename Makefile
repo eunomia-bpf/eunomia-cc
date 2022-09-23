@@ -3,7 +3,7 @@
 OUTPUT ?= .output
 CLANG ?= clang
 LLVM_STRIP ?= llvm-strip
-BPFTOOL ?= $(abspath libs/tools/bpftool)
+BPFTOOL := $(abspath libs/bpftools/src/bpftool)
 LIBBPF_SRC := $(abspath libs/libbpf/src)
 LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
 ARCH := $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/' | sed 's/ppc64le/powerpc/' | sed 's/mips.*/mips/')
@@ -62,6 +62,9 @@ $(LIBBPF_OBJ): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPU
 		    INCLUDEDIR= LIBDIR= UAPIDIR=			      \
 		    install
 
+$(BPFTOOL):
+	$(MAKE) -C libs/bpftools/src
+
 # Build BPF code
 $(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT)
 	$(call msg,BPF,$@)
@@ -69,7 +72,7 @@ $(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT)
 	$(Q)$(LLVM_STRIP) -g $@ # strip useless DWARF info
 
 # Generate BPF skeletons
-$(OUTPUT)/%.skel.h: $(OUTPUT)/%.bpf.o | $(OUTPUT)
+$(OUTPUT)/%.skel.h: $(OUTPUT)/%.bpf.o | $(OUTPUT) $(BPFTOOL)
 	$(call msg,GEN-SKEL,$@)
 	$(Q)$(BPFTOOL) gen skeleton $< > $@
 
