@@ -5,7 +5,7 @@ ENV TZ = Asia/Shanghai
 
 WORKDIR /usr/local/src
 
-RUN apt-get update -y && apt-get install -y libelf1 libelf-dev zlib1g-dev clang python-is-python3
+RUN apt-get update -y && apt-get install -y libelf1 libelf-dev zlib1g-dev clang python-is-python3 make llvm
 
 COPY ./. /usr/local/src
 
