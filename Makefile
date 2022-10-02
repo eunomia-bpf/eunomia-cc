@@ -160,7 +160,7 @@ install_deps:
 	sudo apt-get -y install clang libelf1 libelf-dev zlib1g-dev cmake clang llvm
 
 # test with the files in eunomia-bpf
-TEST_CASES_DIRS=$(shell ls -l eunomia-bpf/bpftools/examples | grep ^d | awk '{print $$9}')
+TEST_CASES_DIRS=$(shell ls -l eunomia-bpf/examples/bpftools | grep ^d | awk '{print $$9}')
 .PHONY: test
 test:
 	rm -rf eunomia-bpf/
@@ -169,7 +169,7 @@ test:
 
 $(TEST_CASES_DIRS):
 	@echo $@
-	SOURCE_DIR=eunomia-bpf/bpftools/examples/$@/ $(MAKE) build
+	SOURCE_DIR=eunomia-bpf/examples/bpftools/$@/ $(MAKE) build
 
 # delete failed targets
 .DELETE_ON_ERROR:

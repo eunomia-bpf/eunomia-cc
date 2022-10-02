@@ -54,12 +54,19 @@ SOURCE_DIR=[target dir] make build
 
 to compile it.
 
+### build docker image
+
+```shell
+make docker
+```
+
 ## Road-map
 
-- [ ] use lua for ebpf package load config
+- [X] support `tracepoints`, `fentry`, `kprobe`, `lsm`, and `ring buffer` / `perf event` output in userspace.
+- [X] make the compile easier to use, and more flexible. Don't need any code modified to compile.
 - [ ] add more ebpf program type support: `xdp`, `perf event` and `uprobe`
+- [ ] add WASM support
 - [ ] add more possibilities from `libbpf`
-- [ ] provide python, go and others sdk
 - [ ] provide better support for old kernels
 
 ## License
