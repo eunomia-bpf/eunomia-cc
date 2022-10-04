@@ -45,6 +45,9 @@ endif
 .PHONY: all
 all: $(APPS)
 
+wasi-sdk-16.0-linux.tar.gz:
+	wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sdk-16.0-linux.tar.gz
+
 # clean all data
 .PHONY: clean
 clean:
@@ -136,6 +139,19 @@ compile:
 	$(Q)python $(PYTHON_SCRIPTS)/merge_json_results.py > $(OUTPUT)/package.json
 	$(Q)python $(PYTHON_SCRIPTS)/check_is_valid_eunomia_ebpf.py
 
+EWASM_DIR ?= eunomia-bpf/ewasm
+EWASM_BUILD_DIR ?= $(EWASM_DIR)/build
+
+.PHONY: build-wasm
+build-wasm:
+	$(call msg,BUILD-WASM)
+	$(Q)SOURCE_DIR=$(SOURCE_DIR) make -C eunomia-bpf/ewasm/scripts build
+
+.PHONY: generate_wasm_skel
+gen-wasm-skel: build
+	$(call msg,GEN-WASM-SKEL)
+	$(Q)SOURCE_DIR=$(SOURCE_DIR) make -C eunomia-bpf/ewasm/scripts generate
+
 SOURCE_DIR ?= /src/
 
 .PHONY: clean_cache
@@ -148,7 +164,9 @@ build:
 	$(Q)python ecc.py -d $(SOURCE_DIR) -i $(SOURCE_DIR) $(shell ls $(SOURCE_DIR)*.bpf.c)
 
 .PHONY: docker
-docker:
+docker: wasi-sdk-16.0-linux.tar.gz
+	rm -rf eunomia-bpf
+	git clone https://github.com/eunomia-bpf/eunomia-bpf  --recursive --depth=1 --shallow-submodules
 	docker build -t yunwei37/ebpm:latest .
 
 .PHONY: docker-push

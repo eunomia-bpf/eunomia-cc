@@ -65,7 +65,8 @@ make docker
 - [X] support `tracepoints`, `fentry`, `kprobe`, `lsm`, and `ring buffer` / `perf event` output in userspace.
 - [X] make the compile easier to use, and more flexible. Don't need any code modified to compile.
 - [ ] add more ebpf program type support: `xdp`, `perf event` and `uprobe`
-- [ ] add WASM support
+- [X] add WASM support
+- [ ] redesign the JSON
 - [ ] add more possibilities from `libbpf`
 - [ ] provide better support for old kernels
 
