@@ -111,6 +111,7 @@ def fix_use_of_rb_event():
     #include <stddef.h>
     #include <stdint.h>
     #include <stdbool.h>
+    #include "asm-generic/int-ll64.h"
     #include "../event.h"
 
     // make the compile not ignore event struct

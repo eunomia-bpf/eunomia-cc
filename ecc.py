@@ -20,7 +20,7 @@ def create_args():
     parser.add_argument(
         '-o', '--output', default='package.json', help='the output file name')
     parser.add_argument('-i', '--includes', default="../",
-                        help='include path')
+                        help='include headers path')
     args= parser.parse_args()
     head, tail = os.path.split(args.file)
     if os.path.split(args.file):
@@ -49,6 +49,8 @@ def main():
         print("cannot read the source *.bpf.c file!")
         exit(1)
     os.system("cp -f " + input_export_define_header + " " +
+              current_dir_path + " 2>/dev/null")
+    os.system("cp -f " + input_export_define_header + " " +
               compile_export_define_header_path + " 2>/dev/null")
     os.system("cp -f " + input_config_file + " " +
               compile_config_file_path + " 2>/dev/null")
@@ -57,6 +59,7 @@ def main():
         print("compile failed!")
         exit(1)
     os.system("cp -f " + compile_output_path + " " + output_path)
+
 
 if __name__ == '__main__':
     main()

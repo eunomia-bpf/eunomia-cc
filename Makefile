@@ -11,7 +11,7 @@ VMLINUX := libs/vmlinux/$(ARCH)/vmlinux.h
 # Use our own libbpf API headers and Linux UAPI headers distributed with
 # libbpf to avoid dependency on system-wide headers, which could be missing or
 # outdated
-EBPF_INCLUDE_DIR ?= ./
+EBPF_INCLUDE_DIR ?= /src/
 INCLUDES := -I$(OUTPUT) -Ilibs/libbpf/include/uapi -I$(dir $(VMLINUX)) -I$(EBPF_INCLUDE_DIR)
 PYTHON_SCRIPTS := $(abspath libs/scripts)
 CFLAGS := -g -Wall -Wno-unused-function #-fsanitize=address
