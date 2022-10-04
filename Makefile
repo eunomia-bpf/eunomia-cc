@@ -11,7 +11,8 @@ VMLINUX := libs/vmlinux/$(ARCH)/vmlinux.h
 # Use our own libbpf API headers and Linux UAPI headers distributed with
 # libbpf to avoid dependency on system-wide headers, which could be missing or
 # outdated
-INCLUDES := -I$(OUTPUT) -Ilibs/libbpf/include/uapi -I$(dir $(VMLINUX))
+EBPF_INCLUDE_DIR ?= ./
+INCLUDES := -I$(OUTPUT) -Ilibs/libbpf/include/uapi -I$(dir $(VMLINUX)) -I$(EBPF_INCLUDE_DIR)
 PYTHON_SCRIPTS := $(abspath libs/scripts)
 CFLAGS := -g -Wall -Wno-unused-function #-fsanitize=address
 
@@ -158,18 +159,6 @@ docker-push:
 install_deps:
 	sudo apt-get update
 	sudo apt-get -y install clang libelf1 libelf-dev zlib1g-dev cmake clang llvm
-
-# test with the files in eunomia-bpf
-TEST_CASES_DIRS=$(shell ls -l eunomia-bpf/examples/bpftools | grep ^d | awk '{print $$9}')
-.PHONY: test
-test:
-	rm -rf eunomia-bpf/
-	git clone https://github.com/eunomia-bpf/eunomia-bpf --depth 1
-	$(MAKE) $(TEST_CASES_DIRS)
-
-$(TEST_CASES_DIRS):
-	@echo $@
-	SOURCE_DIR=eunomia-bpf/examples/bpftools/$@/ $(MAKE) build
 
 # delete failed targets
 .DELETE_ON_ERROR:

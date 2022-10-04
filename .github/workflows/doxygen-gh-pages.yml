@@ -22,10 +22,7 @@ concurrency:
 
 # In that case do the job 'make_and_deploy_doxygen'
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  example-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,15 +40,4 @@ jobs:
 
       - name: test compile
         run:  |
-              make test
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v1
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          # Upload entire repository
-          path: '.output/'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@main
+              make -C libs/tests test
