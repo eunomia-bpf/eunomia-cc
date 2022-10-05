@@ -11,8 +11,9 @@ VMLINUX := libs/vmlinux/$(ARCH)/vmlinux.h
 # Use our own libbpf API headers and Linux UAPI headers distributed with
 # libbpf to avoid dependency on system-wide headers, which could be missing or
 # outdated
-EBPF_INCLUDE_DIRS ?= -I$(SOURCE_DIR)
-INCLUDES := -I$(OUTPUT) -Ilibs/libbpf/include/uapi -I$(dir $(VMLINUX)) $(EBPF_INCLUDE_DIRS)
+SOURCE_DIR ?= /src/
+SOURCE_FILE_INCLUDES ?= 
+INCLUDES := -I$(SOURCE_DIR) $(SOURCE_FILE_INCLUDES) -I$(OUTPUT) -Ilibs/libbpf/include/uapi -I$(dir $(VMLINUX))
 PYTHON_SCRIPTS := $(abspath libs/scripts)
 CFLAGS := -g -Wall -Wno-unused-function #-fsanitize=address
 
@@ -72,7 +73,7 @@ $(BPFTOOL):
 # Build BPF code
 $(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT)
 	$(call msg,BPF,$@)
-	$(Q)$(CLANG) -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH) $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES) -c $(filter %.c,$^) -o $@
+	$(CLANG) -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH) $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES) -c $(filter %.c,$^) -o $@
 	$(Q)$(LLVM_STRIP) -g $@ # strip useless DWARF info
 
 # Generate BPF skeletons
@@ -151,8 +152,6 @@ build-wasm:
 gen-wasm-skel: build
 	$(call msg,GEN-WASM-SKEL)
 	$(Q)SOURCE_DIR=$(SOURCE_DIR) make -C eunomia-bpf/ewasm/scripts generate
-
-SOURCE_DIR ?= /src/
 
 .PHONY: clean_cache
 clean_cache:
